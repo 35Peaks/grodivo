@@ -17,11 +17,12 @@ variable "app_url_fallback" {
 variable "admin_email" {
   description = "First admin user; receives a Cognito invitation with a temporary password"
   type        = string
+  default     = "info@35peaks.co"
 }
 
 variable "admin_name" {
   type    = string
-  default = "Admin"
+  default = "35 Peaks Admin"
 }
 
 variable "digest_from_address" {

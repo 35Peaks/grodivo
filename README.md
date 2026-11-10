@@ -58,8 +58,8 @@ infra/bootstrap   One-time CloudShell script: state bucket + GitHub deploy role
    | `AWS_DEPLOY_ROLE_ARN` | printed by the bootstrap script |
    | `TF_STATE_BUCKET` | printed by the bootstrap script |
    | `APP_DOMAIN` | `grodivo.35peaks.co` |
-   | `ADMIN_EMAIL` | first admin's email |
-   | `ADMIN_NAME` | first admin's name |
+   | `ADMIN_EMAIL` | optional; defaults to `info@35peaks.co` |
+   | `ADMIN_NAME` | optional |
    | `DIGEST_FROM_ADDRESS` | e.g. `sales@35peaks.co` (domain verified in SES) |
    | `CREATE_SENDER_IDENTITY` | `true` only if that domain is *not* verified in SES |
 
