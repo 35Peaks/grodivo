@@ -5,6 +5,8 @@
 set -euo pipefail
 
 REPO="${REPO:-35Peaks/grodivo}"
+# GitHub now puts immutable owner/repo IDs in the token subject: repo:Owner@<id>/name@<id>:...
+REPO_IMMUTABLE="${REPO_IMMUTABLE:-35Peaks@299134846/grodivo@1452036285}"
 REGION="${REGION:-us-east-1}"
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 BUCKET="grodivo-tf-state-${ACCOUNT_ID}"
@@ -45,7 +47,10 @@ cat > /tmp/grodivo-trust.json <<JSON
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {
       "StringEquals": { "token.actions.githubusercontent.com:aud": "sts.amazonaws.com" },
-      "StringLike": { "token.actions.githubusercontent.com:sub": "repo:${REPO}:*" }
+      "StringLike": { "token.actions.githubusercontent.com:sub": [
+        "repo:${REPO}:*",
+        "repo:${REPO_IMMUTABLE}:*"
+      ] }
     }
   }]
 }
