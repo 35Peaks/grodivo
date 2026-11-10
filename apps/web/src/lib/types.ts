@@ -55,3 +55,23 @@ export interface Scorecard {
 }
 export interface Quota { id: string; user_id: string | null; user_name: string | null; period_start: string; period_end: string; target_arr: number; target_bookings: number }
 export interface AdminUser { username: string; id: string; email: string; name: string; role: "admin" | "manager" | "rep"; enabled: boolean; status: string; created: string }
+
+export interface SignalProspect { name: string; role: string | null; segment: Segment; angle: string | null }
+export interface Signal {
+  id: string; headline: string; summary: string | null;
+  deal_status: "rumored" | "announced" | "pending" | "closed" | "terminated" | "unknown";
+  deal_type: "pe_platform" | "pe_add_on" | "corporate_acquisition" | "merger" | "take_private" | "carve_out" | "other";
+  acquirer: string | null; target: string | null; sponsor: string | null;
+  advisors: { name: string; role: string | null }[]; deal_value_usd_m: number | null;
+  sector: string | null; region: string | null; announced_on: string | null; fit_score: number;
+  why_grodivo: string | null; prospects: SignalProspect[];
+  status: "new" | "watching" | "actioned" | "dismissed"; status_note: string | null;
+  actioned_by_name: string | null; actioned_at: string | null; first_seen_at: string; last_seen_at: string;
+  sources: { url: string; publisher: string | null; title: string | null; origin: string; published_at: string | null }[];
+  matched_accounts: { id: string; name: string; segment: Segment }[];
+  links: { account_id: string | null; account_name: string | null; deal_id: string | null; role: string | null; created_at: string }[];
+}
+export interface SignalSummary {
+  new: number; new_high_fit: number; watching: number; actioned_30d: number; last_24h: number;
+  runs: { origin: string; started_at: string; items_in: number; created: number; merged: number; skipped: number; note: string | null }[];
+}

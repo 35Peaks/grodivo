@@ -17,6 +17,9 @@ sees the full pipeline.
 - **Team**: rep scorecards for the quarter with quota attainment.
 - **Admin**: invite users and set roles (admin / manager / rep), targets and quotas,
   stage probabilities.
+- **M&A signals**: each weekday morning, deals from SEC filings (FMP), news (GDELT) and a Claude
+  research pass are scored for Grodivo fit and queued for the team to add to pipeline, watch or dismiss.
+  See [docs/ma-signals.md](docs/ma-signals.md).
 - **Weekly digest**: Monday 7am ET email with pipeline totals, stage changes, new deals,
   overdue deals, and a short Claude-written commentary.
 
@@ -37,7 +40,7 @@ gateway endpoint; Lambdas that need the internet (Cognito admin, Claude, SES) ru
 
 ```
 apps/web          Dashboard (Cloudflare Workers static assets)
-services/api      Lambda handlers: api, admin, migrate, digest, notify
+services/api      Lambda handlers: api, admin, migrate, digest, notify, news, ingest
 db/migrations     SQL migrations, applied by the migrate Lambda on every deploy
 infra             Terraform (state in S3: grodivo-tf-state-<account-id>)
 infra/bootstrap   One-time CloudShell script: state bucket + GitHub deploy role

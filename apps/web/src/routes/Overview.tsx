@@ -2,7 +2,7 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { BarList, Meter, SplitBar, StackedColumns } from "../components/charts";
 import { Badge, Card, Empty, ErrorBox, Loading, PageHeader, SegmentDot, Select, StatTile } from "../components/ui";
 import { OPEN_STAGES, SEGMENTS, SEGMENT_COLOR, date, label, num, pct, usd } from "../lib/format";
-import { useMeta, useSummary } from "../lib/queries";
+import { useMeta, useSignalSummary, useSummary } from "../lib/queries";
 
 const REASON: Record<string, string> = {
   overdue_close: "Close date passed", overdue_next_step: "Next step overdue", no_recent_activity: "No activity in 21+ days",
@@ -13,6 +13,7 @@ export function Overview() {
   const navigate = useNavigate({ from: "/" });
   const meta = useMeta();
   const q = useSummary({ owner: search.owner, segment: search.segment });
+  const signals = useSignalSummary();
   const setFilter = (k: "owner" | "segment", v: string) => navigate({ search: (s) => ({ ...s, [k]: v || undefined }) });
 
   const filters = (
@@ -36,6 +37,12 @@ export function Overview() {
   return (
     <div className={q.isFetching ? "opacity-70 transition-opacity" : "transition-opacity"}>
       <PageHeader title="Overview" subtitle="Pipeline, revenue and forecast across all four segments." actions={filters} />
+      {signals.data && Number(signals.data.new_high_fit) > 0 && (
+        <Link to="/signals" search={{ min_fit: "70" }} className="mb-3 flex items-center justify-between rounded-xl border border-line bg-card px-5 py-3 text-sm hover:bg-muted-bg">
+          <span><span className="font-semibold">{signals.data.new_high_fit} high-fit M&A signals</span> <span className="text-ink-2">waiting for review ({signals.data.last_24h} new in the last 24 hours)</span></span>
+          <span className="text-ink-3">Review →</span>
+        </Link>
+      )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <div className="col-span-2 rounded-xl border border-line bg-card px-5 py-4">

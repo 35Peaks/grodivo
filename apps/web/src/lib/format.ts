@@ -2,8 +2,10 @@ export const SEGMENTS = ["pe", "corporate_ma", "consulting", "cxo_board"] as con
 export const STAGES = ["lead", "qualified", "discovery", "proposal", "pilot", "negotiation", "closed_won", "closed_lost"] as const;
 export const OPEN_STAGES = STAGES.slice(0, 6);
 export const OFFERINGS = ["diagnostic", "kai_subscription", "enterprise_transformation", "pilot"] as const;
-export const SOURCES = ["direct", "partner", "referral", "inbound", "event", "investor"] as const;
+export const SOURCES = ["direct", "partner", "referral", "inbound", "event", "investor", "news_signal"] as const;
 export const MOTIONS = ["land", "expand"] as const;
+export const SIGNAL_TYPES = ["pe_platform", "pe_add_on", "corporate_acquisition", "merger", "take_private", "carve_out", "other"] as const;
+export const SIGNAL_DEAL_STATUSES = ["rumored", "announced", "pending", "closed", "terminated", "unknown"] as const;
 export const ACTIVITY_TYPES = ["call", "email", "meeting", "demo", "note", "task"] as const;
 export type Segment = (typeof SEGMENTS)[number];
 export type Stage = (typeof STAGES)[number];
@@ -16,7 +18,12 @@ export const LABELS: Record<string, string> = {
   land: "Land", expand: "Expand",
   direct: "Direct", partner: "Partner", referral: "Referral", inbound: "Inbound", event: "Event", investor: "Investor intro",
   call: "Call", email: "Email", meeting: "Meeting", demo: "Demo", note: "Note", task: "Task",
-  admin: "Admin", manager: "Manager", rep: "Rep",
+  admin: "Admin", manager: "Manager", rep: "Rep", news_signal: "M&A signal",
+  pe_platform: "PE platform", pe_add_on: "PE add-on", corporate_acquisition: "Corporate acquisition", merger: "Merger",
+  take_private: "Take-private", carve_out: "Carve-out", other: "Other",
+  rumored: "Rumored", announced: "Announced", pending: "Pending close", closed: "Closed", terminated: "Terminated", unknown: "Status unclear",
+  fmp: "SEC filings (FMP)", gdelt: "News wire (GDELT)", claude_research: "Claude research", manual: "Added by team",
+  acquirer: "Acquirer", target: "Target", sponsor: "Sponsor", advisor: "Advisor",
 };
 export const label = (k: string | null | undefined) => (k ? LABELS[k] ?? k.replace(/_/g, " ") : "");
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
-import type { Account, AccountDetail, Deal, DealDetail, Meta, Scorecard, Summary } from "./types";
+import type { Account, AccountDetail, Deal, DealDetail, Meta, Scorecard, Signal, SignalSummary, Summary } from "./types";
 
 const qs = (p: Record<string, string | undefined>) => {
   const s = new URLSearchParams(Object.entries(p).filter(([, v]) => v) as [string, string][]).toString();
@@ -17,6 +17,11 @@ export const useDeal = (id: string) => useQuery({ queryKey: ["deal", id], queryF
 export const useAccounts = (f: Record<string, string | undefined> = {}) =>
   useQuery({ queryKey: ["accounts", f], queryFn: () => api<Account[]>(`/accounts${qs(f)}`), placeholderData: (p) => p });
 export const useAccount = (id: string) => useQuery({ queryKey: ["account", id], queryFn: () => api<AccountDetail>(`/accounts/${id}`) });
+
+export const useSignals = (f: Record<string, string | undefined>) =>
+  useQuery({ queryKey: ["signals", f], queryFn: () => api<Signal[]>(`/signals${qs(f)}`), placeholderData: (p) => p });
+export const useSignalSummary = () =>
+  useQuery({ queryKey: ["signal-summary"], queryFn: () => api<SignalSummary>("/signals/summary"), refetchInterval: 5 * 60_000 });
 
 /** Any write invalidates everything derived from deals, so the numbers always agree. */
 export function useSave<T = any>() {

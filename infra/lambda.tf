@@ -1,12 +1,14 @@
 locals {
-  vpc_functions    = toset(["api", "migrate", "digest"])
-  public_functions = toset(["admin", "notify"])
+  vpc_functions    = toset(["api", "migrate", "digest", "ingest"])
+  public_functions = toset(["admin", "notify", "news"])
   functions = {
     api     = { timeout = 29, memory = 512 }
     migrate = { timeout = 120, memory = 256 }
     digest  = { timeout = 60, memory = 256 }
     admin   = { timeout = 15, memory = 256 }
     notify  = { timeout = 120, memory = 256 }
+    news    = { timeout = 900, memory = 512 }
+    ingest  = { timeout = 120, memory = 256 }
   }
   common_env = { NODE_OPTIONS = "--enable-source-maps" }
   function_env = {
@@ -14,6 +16,13 @@ locals {
     migrate = { DATABASE_URL = local.database_url }
     digest  = { DATABASE_URL = local.database_url, DIGEST_BUCKET = aws_s3_bucket.digests.bucket }
     admin   = { USER_POOL_ID = aws_cognito_user_pool.main.id }
+    ingest  = { DATABASE_URL = local.database_url }
+    news = {
+      DIGEST_BUCKET        = aws_s3_bucket.digests.bucket
+      ANTHROPIC_SECRET_ARN = aws_secretsmanager_secret.anthropic.arn
+      FMP_SECRET_ARN       = aws_secretsmanager_secret.fmp.arn
+      CLAUDE_MODEL         = var.claude_model
+    }
     notify = {
       ANTHROPIC_SECRET_ARN = aws_secretsmanager_secret.anthropic.arn
       CLAUDE_MODEL         = var.claude_model

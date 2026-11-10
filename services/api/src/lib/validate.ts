@@ -4,7 +4,7 @@ import type { Context } from "hono";
 export const segments = ["pe", "corporate_ma", "consulting", "cxo_board"] as const;
 export const stages = ["lead", "qualified", "discovery", "proposal", "pilot", "negotiation", "closed_won", "closed_lost"] as const;
 export const offerings = ["diagnostic", "kai_subscription", "enterprise_transformation", "pilot"] as const;
-export const sources = ["direct", "partner", "referral", "inbound", "event", "investor"] as const;
+export const sources = ["direct", "partner", "referral", "inbound", "event", "investor", "news_signal"] as const;
 export const motions = ["land", "expand"] as const;
 export const activityTypes = ["call", "email", "meeting", "demo", "note", "task"] as const;
 

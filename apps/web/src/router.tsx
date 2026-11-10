@@ -10,6 +10,7 @@ import { Accounts } from "./routes/Accounts";
 import { AccountPage } from "./routes/AccountPage";
 import { Team } from "./routes/Team";
 import { Admin } from "./routes/Admin";
+import { Signals } from "./routes/Signals";
 
 const str = (v: unknown) => (typeof v === "string" && v ? v : undefined);
 
@@ -47,12 +48,16 @@ const dealRoute = createRoute({ getParentRoute: () => appRoute, path: "/deals/$i
 const accountsRoute = createRoute({ getParentRoute: () => appRoute, path: "/accounts", component: Accounts,
   validateSearch: (s: Record<string, unknown>): { segment?: string; q?: string } => ({ segment: str(s.segment), q: str(s.q) }) });
 const accountRoute = createRoute({ getParentRoute: () => appRoute, path: "/accounts/$id", component: AccountPage });
+const signalsRoute = createRoute({ getParentRoute: () => appRoute, path: "/signals", component: Signals,
+  validateSearch: (s: Record<string, unknown>): Partial<Record<"status" | "type" | "deal_status" | "segment" | "min_fit" | "q", string>> => ({
+    status: str(s.status), type: str(s.type), deal_status: str(s.deal_status), segment: str(s.segment), min_fit: str(s.min_fit), q: str(s.q),
+  }) });
 const teamRoute = createRoute({ getParentRoute: () => appRoute, path: "/team", component: Team });
 const adminRoute = createRoute({ getParentRoute: () => appRoute, path: "/admin", component: Admin });
 
 const routeTree = rootRoute.addChildren([
   callbackRoute,
-  appRoute.addChildren([overviewRoute, pipelineRoute, dealRoute, accountsRoute, accountRoute, teamRoute, adminRoute]),
+  appRoute.addChildren([overviewRoute, pipelineRoute, dealRoute, accountsRoute, accountRoute, signalsRoute, teamRoute, adminRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });

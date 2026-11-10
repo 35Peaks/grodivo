@@ -31,6 +31,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "digests" {
     filter { prefix = "digests/" }
     expiration { days = 90 }
   }
+  rule {
+    id     = "expire-signal-batches"
+    status = "Enabled"
+    filter { prefix = "signals/" }
+    expiration { days = 30 }
+  }
 }
 
 resource "aws_lambda_permission" "s3_notify" {
@@ -49,7 +55,14 @@ resource "aws_s3_bucket_notification" "digests" {
     filter_prefix       = "digests/"
     filter_suffix       = ".json"
   }
-  depends_on = [aws_lambda_permission.s3_notify]
+  # M&A signal batches (see signals.tf)
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.fn["ingest"].arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "signals/inbox/"
+    filter_suffix       = ".json"
+  }
+  depends_on = [aws_lambda_permission.s3_notify, aws_lambda_permission.s3_ingest]
 }
 
 data "aws_iam_policy_document" "scheduler_assume" {

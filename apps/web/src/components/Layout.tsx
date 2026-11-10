@@ -1,11 +1,12 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import { authDisabled, signOut } from "../lib/auth";
 import { label } from "../lib/format";
-import { useMeta } from "../lib/queries";
+import { useMeta, useSignalSummary } from "../lib/queries";
 import { Loading, ErrorBox } from "./ui";
 
 const NAV = [
   { to: "/", label: "Overview" },
+  { to: "/signals", label: "M&A signals" },
   { to: "/pipeline", label: "Pipeline" },
   { to: "/accounts", label: "Accounts" },
   { to: "/team", label: "Team" },
@@ -13,6 +14,7 @@ const NAV = [
 
 export function Layout() {
   const meta = useMeta();
+  const signals = useSignalSummary();
   if (meta.isLoading) return <Loading />;
   if (meta.error) return <div className="p-8"><ErrorBox error={meta.error} /></div>;
   const me = meta.data!.me;
@@ -29,6 +31,9 @@ export function Layout() {
               className="whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm text-ink-2 hover:bg-muted-bg hover:text-ink"
               activeProps={{ className: "bg-muted-bg font-medium !text-ink" }}>
               {n.label}
+              {n.to === "/signals" && signals.data && Number(signals.data.new) > 0 && (
+                <span className="ml-1.5 rounded bg-[var(--seq-strong)] px-1.5 text-[11px] font-medium text-white tabular">{signals.data.new}</span>
+              )}
             </Link>
           ))}
         </nav>
