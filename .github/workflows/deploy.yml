@@ -20,7 +20,7 @@ jobs:
     env:
       AWS_REGION: us-east-1
       TF_IN_AUTOMATION: "1"
-      TF_VAR_app_domain: ${{ vars.APP_DOMAIN }}
+      TF_VAR_app_domain: ${{ vars.APP_DOMAIN || 'grodivo.35peaks.co' }}
       TF_VAR_admin_email: ${{ vars.ADMIN_EMAIL || 'info@35peaks.co' }}
       TF_VAR_admin_name: ${{ vars.ADMIN_NAME || '35 Peaks Admin' }}
       TF_VAR_digest_from_address: ${{ vars.DIGEST_FROM_ADDRESS }}
@@ -31,7 +31,7 @@ jobs:
       - name: Check required settings
         run: |
           missing=0
-          for v in AWS_DEPLOY_ROLE_ARN TF_STATE_BUCKET APP_DOMAIN DIGEST_FROM_ADDRESS; do
+          for v in AWS_DEPLOY_ROLE_ARN TF_STATE_BUCKET DIGEST_FROM_ADDRESS; do
             if [ -z "$(eval echo \${$v:-})" ]; then echo "::error::Repository variable $v is not set"; missing=1; fi
           done
           [ -n "$CF_TOKEN" ] || { echo "::error::Secret CLOUDFLARE_API_TOKEN is not set"; missing=1; }
@@ -40,7 +40,6 @@ jobs:
         env:
           AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
-          APP_DOMAIN: ${{ vars.APP_DOMAIN }}
           DIGEST_FROM_ADDRESS: ${{ vars.DIGEST_FROM_ADDRESS }}
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -90,7 +89,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+          APP_DOMAIN: ${{ vars.APP_DOMAIN || 'grodivo.35peaks.co' }}
         run: |
           node -e '
             const fs = require("fs");
@@ -103,5 +102,5 @@ jobs:
       - name: Summary
         run: |
           echo "### Deployed" >> $GITHUB_STEP_SUMMARY
-          echo "- Dashboard: https://${{ vars.APP_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Dashboard: https://${{ vars.APP_DOMAIN || 'grodivo.35peaks.co' }}" >> $GITHUB_STEP_SUMMARY
           echo "- API: $(jq -r .api_url.value tf-outputs.json)" >> $GITHUB_STEP_SUMMARY

@@ -4,8 +4,9 @@ variable "region" {
 }
 
 variable "app_domain" {
-  description = "Custom domain for the dashboard on Cloudflare, e.g. grodivo.35peaks.co"
+  description = "Custom domain for the dashboard on Cloudflare"
   type        = string
+  default     = "grodivo.35peaks.co"
 }
 
 variable "app_url_fallback" {
