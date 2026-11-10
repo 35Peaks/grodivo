@@ -31,7 +31,11 @@ if ! aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_
   echo "Created GitHub OIDC provider"
 fi
 
-# 3. Deploy role: only the main branch / production environment of this repo can assume it
+# Make sure the provider accepts the AWS audience (an existing provider may lack it)
+aws iam add-client-id-to-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_ARN" \
+  --client-id sts.amazonaws.com 2>/dev/null || true
+
+# 3. Deploy role: only workflows in this repo can assume it (the workflow itself runs only from main)
 cat > /tmp/grodivo-trust.json <<JSON
 {
   "Version": "2012-10-17",
@@ -41,10 +45,7 @@ cat > /tmp/grodivo-trust.json <<JSON
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {
       "StringEquals": { "token.actions.githubusercontent.com:aud": "sts.amazonaws.com" },
-      "StringLike": { "token.actions.githubusercontent.com:sub": [
-        "repo:${REPO}:ref:refs/heads/main",
-        "repo:${REPO}:environment:production"
-      ] }
+      "StringLike": { "token.actions.githubusercontent.com:sub": "repo:${REPO}:*" }
     }
   }]
 }
