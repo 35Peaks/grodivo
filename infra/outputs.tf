@@ -1,0 +1,9 @@
+output "api_url" { value = aws_apigatewayv2_api.main.api_endpoint }
+output "cognito_authority" { value = "https://cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.main.id}" }
+output "cognito_client_id" { value = aws_cognito_user_pool_client.web.id }
+output "cognito_domain" { value = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${var.region}.amazoncognito.com" }
+output "user_pool_id" { value = aws_cognito_user_pool.main.id }
+output "migrate_function" { value = aws_lambda_function.fn["migrate"].function_name }
+output "digest_function" { value = aws_lambda_function.fn["digest"].function_name }
+output "anthropic_secret_name" { value = aws_secretsmanager_secret.anthropic.name }
+output "app_url" { value = local.app_url }

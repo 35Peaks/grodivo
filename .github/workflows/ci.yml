@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: grodivo
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Apply migrations to a scratch database
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/grodivo
+          DATABASE_SSL: "false"
+        run: node -e "import('./services/api/dist/migrate/index.mjs').then(m => m.handler()).then(r => { console.log(r); process.exit(0) })"
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: "~1.13" }
+      - run: terraform -chdir=infra init -backend=false
+      - run: terraform -chdir=infra validate

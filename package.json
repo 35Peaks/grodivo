@@ -1,0 +1,10 @@
+{
+  "name": "grodivo",
+  "private": true,
+  "workspaces": ["apps/web", "services/api"],
+  "scripts": {
+    "build": "npm run build -w services/api && npm run build -w apps/web",
+    "typecheck": "npm run typecheck -w services/api && npm run typecheck -w apps/web"
+  },
+  "engines": { "node": ">=22" }
+}

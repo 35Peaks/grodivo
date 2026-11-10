@@ -1,0 +1,108 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  id-token: write   # GitHub OIDC -> AWS role, no stored AWS keys
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      AWS_REGION: us-east-1
+      TF_IN_AUTOMATION: "1"
+      TF_VAR_app_domain: ${{ vars.APP_DOMAIN }}
+      TF_VAR_admin_email: ${{ vars.ADMIN_EMAIL }}
+      TF_VAR_admin_name: ${{ vars.ADMIN_NAME }}
+      TF_VAR_digest_from_address: ${{ vars.DIGEST_FROM_ADDRESS }}
+      TF_VAR_create_sender_identity: ${{ vars.CREATE_SENDER_IDENTITY || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required settings
+        run: |
+          missing=0
+          for v in AWS_DEPLOY_ROLE_ARN TF_STATE_BUCKET APP_DOMAIN ADMIN_EMAIL DIGEST_FROM_ADDRESS; do
+            if [ -z "$(eval echo \${$v:-})" ]; then echo "::error::Repository variable $v is not set"; missing=1; fi
+          done
+          [ -n "$CF_TOKEN" ] || { echo "::error::Secret CLOUDFLARE_API_TOKEN is not set"; missing=1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::Secret CLOUDFLARE_ACCOUNT_ID is not set"; missing=1; }
+          exit $missing
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+          ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
+          DIGEST_FROM_ADDRESS: ${{ vars.DIGEST_FROM_ADDRESS }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+
+      - name: Build Lambda bundles (with RDS CA bundle for verified TLS)
+        run: |
+          curl -fsSL https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o services/api/rds-ca.pem
+          npm run build -w services/api
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: "~1.13", terraform_wrapper: false }
+
+      - name: Terraform apply
+        working-directory: infra
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+          terraform apply -input=false -auto-approve
+          terraform output -json > ../tf-outputs.json
+
+      - name: Run database migrations
+        run: |
+          FN=$(jq -r .migrate_function.value tf-outputs.json)
+          aws lambda invoke --function-name "$FN" --cli-read-timeout 180 /tmp/migrate.json > /tmp/invoke.json
+          cat /tmp/migrate.json; echo
+          if jq -e '.FunctionError' /tmp/invoke.json >/dev/null; then echo "::error::Migration failed"; exit 1; fi
+
+      - name: Build dashboard
+        run: |
+          export VITE_API_URL=$(jq -r .api_url.value tf-outputs.json)
+          export VITE_COGNITO_AUTHORITY=$(jq -r .cognito_authority.value tf-outputs.json)
+          export VITE_COGNITO_CLIENT_ID=$(jq -r .cognito_client_id.value tf-outputs.json)
+          export VITE_COGNITO_DOMAIN=$(jq -r .cognito_domain.value tf-outputs.json)
+          npm run build -w apps/web
+
+      - name: Deploy dashboard to Cloudflare Workers
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const c = JSON.parse(fs.readFileSync("wrangler.jsonc", "utf8"));
+            c.routes = [{ pattern: process.env.APP_DOMAIN, custom_domain: true }];
+            fs.writeFileSync("wrangler.deploy.json", JSON.stringify(c, null, 2));
+          '
+          npx wrangler deploy --config wrangler.deploy.json
+
+      - name: Summary
+        run: |
+          echo "### Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- Dashboard: https://${{ vars.APP_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+          echo "- API: $(jq -r .api_url.value tf-outputs.json)" >> $GITHUB_STEP_SUMMARY

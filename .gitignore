@@ -4,3 +4,8 @@ node_modules/
 .env*
 dist/
 .wrangler/
+rds-ca.pem
+wrangler.deploy.json
+tf-outputs.json
+.env.local
+!.env.example
