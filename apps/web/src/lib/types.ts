@@ -64,6 +64,11 @@ export interface Signal {
   acquirer: string | null; target: string | null; sponsor: string | null;
   advisors: { name: string; role: string | null }[]; deal_value_usd_m: number | null;
   sector: string | null; region: string | null; announced_on: string | null; fit_score: number;
+  acquirer_ticker: string | null; target_ticker: string | null; acquirer_hq: string | null; target_hq: string | null;
+  target_employees: number | null; acquirer_employees: number | null; consideration: string | null;
+  price_per_share: number | null; premium_pct: number | null; expected_close: string | null; closed_on: string | null;
+  financing: string | null; approvals: string | null; terms: Record<string, unknown>;
+  events: { field: string; old_value: string | null; new_value: string | null; origin: string | null; source_url: string | null; at: string }[];
   why_grodivo: string | null; prospects: SignalProspect[];
   status: "new" | "watching" | "actioned" | "dismissed"; status_note: string | null;
   actioned_by_name: string | null; actioned_at: string | null; first_seen_at: string; last_seen_at: string;

@@ -24,6 +24,22 @@ EventBridge Scheduler (weekdays 6:30 ET)
 Each source runs independently; one failing never blocks the others. Claude output is only accepted when
 it maps back to a real candidate (FMP/GDELT) or carries the URL of the article it read (research pass).
 
+## What gets stored
+
+Everything the feed sees is kept in Postgres, so deal data accumulates over time.
+
+| Table | Contents |
+|---|---|
+| `signals` | One row per deal: parties, tickers, HQs, status, type, value, target and buyer headcount, consideration, price per share, premium, announced / expected close / closed dates, financing, pending approvals, any other terms (`terms` JSON), fit score, Grodivo angle, prospects, and Claude's latest full extraction verbatim (`extracted`) |
+| `signal_sources` | Every article or filing that reported the deal, with the provider's original record (`raw`: FMP filing row, GDELT article, research citation) and what Claude extracted from that source |
+| `signal_events` | Deal history: each change to status, value, expected close, closed date, terms or headcount, with the source that reported it |
+| `signal_candidates` | Every item the feed looked at, kept or dropped, with Claude's reason, raw record and the signal it became |
+| `signal_links` | Which accounts and deals each signal fed |
+| `signal_runs` | Each run: source, items in, created, merged, rejected |
+
+The raw S3 batches are also retained for 365 days. `GET /signals/:id` returns the full record including raw sources;
+`GET /signals/candidates/recent` lists everything the feed considered.
+
 ## What the sales team does with a signal
 
 | Action | Effect |

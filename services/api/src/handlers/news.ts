@@ -15,12 +15,12 @@ async function secret(arn: string | undefined): Promise<string | null> {
   return v && v !== "REPLACE_ME" ? v : null;
 }
 
-async function put(origin: Origin, items: unknown[], note: string) {
+async function put(origin: Origin, items: unknown[], note: string, candidates?: unknown[]) {
   const day = new Date().toISOString().slice(0, 10);
   const key = `signals/inbox/${day}/${origin}-${Date.now()}.json`;
   await s3.send(new PutObjectCommand({
     Bucket: process.env.DIGEST_BUCKET, Key: key, ContentType: "application/json",
-    Body: JSON.stringify({ origin, generated_at: new Date().toISOString(), note, items }),
+    Body: JSON.stringify({ origin, generated_at: new Date().toISOString(), note, items, candidates }),
   }));
   return key;
 }
@@ -37,14 +37,14 @@ export const handler = async (event: { sources?: Origin[] } = {}) => {
   if (want.has("fmp")) jobs.push((async () => {
     if (!fmpKey) { report.fmp = "skipped: no FMP key"; return; }
     const cands = await fetchFmp(fmpKey);
-    const items = await classifyCandidates(anthropicKey, cands);
-    report.fmp = { candidates: cands.length, kept: items.length, key: await put("fmp", items, `${cands.length} filings`) };
+    const { items, candidates } = await classifyCandidates(anthropicKey, cands);
+    report.fmp = { candidates: cands.length, kept: items.length, key: await put("fmp", items, `${cands.length} filings`, candidates) };
   })().catch((e) => { report.fmp = `error: ${e.message}`; }));
 
   if (want.has("gdelt")) jobs.push((async () => {
     const cands = await fetchGdelt();
-    const items = await classifyCandidates(anthropicKey, cands);
-    report.gdelt = { candidates: cands.length, kept: items.length, key: await put("gdelt", items, `${cands.length} headlines`) };
+    const { items, candidates } = await classifyCandidates(anthropicKey, cands);
+    report.gdelt = { candidates: cands.length, kept: items.length, key: await put("gdelt", items, `${cands.length} headlines`, candidates) };
   })().catch((e) => { report.gdelt = `error: ${e.message}`; }));
 
   if (want.has("claude_research")) jobs.push((async () => {

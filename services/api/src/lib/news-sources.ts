@@ -7,6 +7,7 @@ export interface Candidate {
   publisher: string | null;
   published_at: string | null;
   hint?: string;           // structured context (e.g. FMP filing fields)
+  raw: unknown;            // the provider's original record, stored verbatim in the database
 }
 
 const UA = "GrodivoSalesSignals/1.0 (+https://grodivo.ai)";
@@ -33,6 +34,7 @@ export async function fetchFmp(apiKey: string, sinceDays = 3): Promise<Candidate
       url: r.link,
       publisher: "SEC filing via Financial Modeling Prep",
       published_at: Number.isNaN(accepted) ? null : new Date(accepted).toISOString(),
+      raw: r,
       hint: `SEC M&A filing. Acquirer: ${r.companyName} (${r.symbol ?? "n/a"}). Target: ${r.targetedCompanyName ?? "n/a"} (${r.targetedSymbol ?? "n/a"}). Transaction date: ${r.transactionDate ?? "n/a"}.`,
     });
   }
@@ -60,6 +62,7 @@ export async function fetchGdelt(hours = 24, max = 150): Promise<Candidate[]> {
       url: a.url,
       publisher: a.domain ?? null,
       published_at: parseGdeltDate(a.seendate),
+      raw: a,
     });
   }
   return out;

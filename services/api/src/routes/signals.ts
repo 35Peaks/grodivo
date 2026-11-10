@@ -26,6 +26,9 @@ const LIST_SQL = `
     (SELECT COALESCE(json_agg(json_build_object('account_id', l.account_id, 'account_name', a.name, 'deal_id', l.deal_id,
         'role', l.role, 'created_at', l.created_at) ORDER BY l.created_at), '[]')
        FROM signal_links l LEFT JOIN accounts a ON a.id = l.account_id WHERE l.signal_id = s.id) AS links,
+    (SELECT COALESCE(json_agg(json_build_object('field', e.field, 'old_value', e.old_value, 'new_value', e.new_value,
+        'origin', e.origin, 'source_url', e.source_url, 'at', e.at) ORDER BY e.at), '[]')
+       FROM signal_events e WHERE e.signal_id = s.id) AS events,
     u.name AS actioned_by_name
   FROM signals s LEFT JOIN users u ON u.id = s.actioned_by`;
 
@@ -64,7 +67,20 @@ signals.get("/summary", async (c) => {
 
 signals.get("/:id", async (c) => {
   const [row] = await query(`${LIST_SQL} WHERE s.id = $1`, [c.req.param("id")]);
-  return row ? c.json(row) : c.json({ error: "not found" }, 404);
+  if (!row) return c.json({ error: "not found" }, 404);
+  // Full record for audit: raw provider data and per-source extractions
+  const raw = await query(`SELECT origin, url, raw, extracted, created_at FROM signal_sources WHERE signal_id = $1 ORDER BY created_at`, [row.id]);
+  return c.json({ ...row, source_records: raw });
+});
+
+/** Everything the feed looked at, kept or dropped, for tuning and audit. */
+signals.get("/candidates/recent", async (c) => {
+  const kept = c.req.query("kept");
+  const rows = await query(
+    `SELECT id, origin, url, title, published_at, kept, reason, signal_id, created_at FROM signal_candidates
+     ${kept === "true" ? "WHERE kept" : kept === "false" ? "WHERE NOT kept" : ""}
+     ORDER BY created_at DESC LIMIT 500`);
+  return c.json(rows);
 });
 
 /** Manual entry: a rep pastes a deal they heard about. Same dedupe as the automated feed. */

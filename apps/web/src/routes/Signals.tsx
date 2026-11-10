@@ -26,6 +26,33 @@ function FitScore({ score }: { score: number }) {
   );
 }
 
+const FIELD_LABEL: Record<string, string> = {
+  deal_status: "Status", deal_value_usd_m: "Value ($M)", expected_close: "Expected close", closed_on: "Closed",
+  price_per_share: "Price/share", premium_pct: "Premium %", target_employees: "Target employees",
+  acquirer_employees: "Buyer employees", consideration: "Consideration", approvals: "Approvals", financing: "Financing", sponsor: "Sponsor",
+};
+
+function DealFacts({ s }: { s: Signal }) {
+  const facts: [string, string][] = [];
+  if (s.target_employees != null) facts.push(["Target employees", s.target_employees.toLocaleString()]);
+  if (s.expected_close) facts.push(["Expected close", date(s.expected_close)]);
+  if (s.closed_on) facts.push(["Closed", date(s.closed_on)]);
+  if (s.consideration && s.consideration !== "unknown") facts.push(["Consideration", s.consideration]);
+  if (s.price_per_share != null) facts.push(["Price/share", `$${s.price_per_share}`]);
+  if (s.premium_pct != null) facts.push(["Premium", `${s.premium_pct}%`]);
+  if (s.approvals) facts.push(["Approvals", s.approvals]);
+  if (s.financing) facts.push(["Financing", s.financing]);
+  const tickers = [s.acquirer_ticker, s.target_ticker].filter(Boolean).join(" / ");
+  if (tickers) facts.push(["Tickers", tickers]);
+  for (const [k, v] of Object.entries(s.terms ?? {})) if (v != null && v !== "") facts.push([k.replace(/_/g, " "), String(v)]);
+  if (!facts.length) return null;
+  return (
+    <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+      {facts.map(([k, v]) => <div key={k} className="flex gap-1"><dt className="text-ink-3">{k}</dt><dd className="text-ink">{v}</dd></div>)}
+    </dl>
+  );
+}
+
 function SignalCard({ s, onAdd, onDismiss }: { s: Signal; onAdd: (s: Signal, p?: SignalProspect) => void; onDismiss: (s: Signal) => void }) {
   const save = useSave();
   const [showSources, setShowSources] = useState(false);
@@ -53,6 +80,7 @@ function SignalCard({ s, onAdd, onDismiss }: { s: Signal; onAdd: (s: Signal, p?:
               s.sponsor && <span key="s"><span className="text-ink-3">Sponsor</span> {s.sponsor}</span>]
               .filter(Boolean).reduce<React.ReactNode[]>((acc, el, i) => (i ? [...acc, <span key={`d${i}`} className="text-ink-3"> · </span>, el] : [el]), [])}
           </p>
+          <DealFacts s={s} />
           {s.why_grodivo && (
             <p className="mt-3 rounded-lg bg-muted-bg px-3 py-2 text-sm text-ink"><span className="font-medium">Why Grodivo: </span>{s.why_grodivo}</p>
           )}
@@ -97,7 +125,7 @@ function SignalCard({ s, onAdd, onDismiss }: { s: Signal; onAdd: (s: Signal, p?:
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <button className="text-xs text-ink-3 hover:text-ink" onClick={() => setShowSources((v) => !v)}>
-              {s.sources.length} source{s.sources.length === 1 ? "" : "s"} · first seen {relative(s.first_seen_at)}{s.announced_on ? ` · announced ${date(s.announced_on)}` : ""}
+              {s.sources.length} source{s.sources.length === 1 ? "" : "s"}{s.events.length > 1 ? ` · ${s.events.length - 1} update${s.events.length > 2 ? "s" : ""}` : ""} · first seen {relative(s.first_seen_at)}{s.announced_on ? ` · announced ${date(s.announced_on)}` : ""}
             </button>
             <div className="flex flex-wrap gap-1.5">
               {s.status === "new" && <Button size="sm" variant="ghost" onClick={() => act("watch")}>Watch</Button>}
@@ -108,6 +136,16 @@ function SignalCard({ s, onAdd, onDismiss }: { s: Signal; onAdd: (s: Signal, p?:
               {(s.status === "dismissed" || s.status === "watching") && <Button size="sm" variant="ghost" onClick={() => act("reopen")}>Move to New</Button>}
             </div>
           </div>
+          {showSources && s.events.filter((e) => e.field !== "created").length > 0 && (
+            <ul className="mt-2 space-y-1 border-t border-line pt-2 text-xs">
+              {s.events.filter((e) => e.field !== "created").map((e, i) => (
+                <li key={i} className="flex gap-2 text-ink-2">
+                  <span className="w-28 shrink-0 text-ink-3">{date(e.at)}</span>
+                  <span>{FIELD_LABEL[e.field] ?? e.field}: {e.old_value ? `${label(e.old_value)} → ` : ""}<span className="text-ink">{label(e.new_value)}</span></span>
+                </li>
+              ))}
+            </ul>
+          )}
           {showSources && (
             <ul className="mt-2 space-y-1 border-t border-line pt-2 text-xs">
               {s.sources.map((src) => (

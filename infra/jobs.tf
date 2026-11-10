@@ -35,7 +35,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "digests" {
     id     = "expire-signal-batches"
     status = "Enabled"
     filter { prefix = "signals/" }
-    expiration { days = 30 }
+    expiration { days = 365 }
   }
 }
 

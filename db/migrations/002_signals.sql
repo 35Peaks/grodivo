@@ -28,6 +28,22 @@ CREATE TABLE signals (
   sector           text,
   region           text,
   announced_on     date,
+  -- Deal terms and sizing (whatever the sources report; null when not disclosed)
+  acquirer_ticker  text,
+  target_ticker    text,
+  acquirer_hq      text,
+  target_hq        text,
+  target_employees integer CHECK (target_employees >= 0),   -- drives kAI seat sizing
+  acquirer_employees integer CHECK (acquirer_employees >= 0),
+  consideration    text,                          -- cash / stock / mixed / unknown
+  price_per_share  numeric(14,4),
+  premium_pct      numeric(8,2),
+  expected_close   date,
+  closed_on        date,
+  financing        text,
+  approvals        text,                          -- regulatory / shareholder approvals pending
+  terms            jsonb NOT NULL DEFAULT '{}',   -- any other reported terms (earn-outs, break fees, rollover...)
+  extracted        jsonb NOT NULL DEFAULT '{}',   -- latest full Claude extraction, verbatim
   fit_score        integer NOT NULL DEFAULT 0 CHECK (fit_score BETWEEN 0 AND 100),
   why_grodivo      text,                          -- the selling angle, one or two sentences
   prospects        jsonb NOT NULL DEFAULT '[]',   -- [{name, role, segment, angle}] who to pitch
@@ -52,6 +68,8 @@ CREATE TABLE signal_sources (
   publisher    text,
   title        text,
   published_at timestamptz,
+  raw          jsonb,                             -- the original record (FMP filing row, GDELT article, research citation)
+  extracted    jsonb,                             -- what Claude extracted from this specific source
   created_at   timestamptz NOT NULL DEFAULT now(),
   UNIQUE (signal_id, url)
 );
@@ -72,6 +90,36 @@ CREATE INDEX signal_links_account_idx ON signal_links(account_id);
 
 -- Fuzzy account matching for "already in our CRM" chips
 CREATE INDEX accounts_name_trgm ON accounts USING gin (lower(name) gin_trgm_ops);
+
+-- Deal history: every change to status, value, dates or parties, with the source that reported it
+CREATE TABLE signal_events (
+  id          bigserial PRIMARY KEY,
+  signal_id   uuid NOT NULL REFERENCES signals(id) ON DELETE CASCADE,
+  field       text NOT NULL,
+  old_value   text,
+  new_value   text,
+  origin      signal_origin,
+  source_url  text,
+  at          timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX signal_events_signal_idx ON signal_events(signal_id, at);
+
+-- Every candidate the feed looked at, kept or not, with Claude's reason. Full audit trail and tuning data.
+CREATE TABLE signal_candidates (
+  id          bigserial PRIMARY KEY,
+  run_id      bigint,
+  origin      signal_origin NOT NULL,
+  url         text NOT NULL,
+  title       text,
+  published_at timestamptz,
+  kept        boolean NOT NULL,
+  reason      text,
+  signal_id   uuid REFERENCES signals(id) ON DELETE SET NULL,
+  raw         jsonb,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (origin, url)
+);
+CREATE INDEX signal_candidates_created_idx ON signal_candidates(created_at DESC);
 
 -- One row per news run, so the team can see the feed is alive
 CREATE TABLE signal_runs (
