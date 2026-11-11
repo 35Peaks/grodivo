@@ -8,8 +8,15 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node", "aws-lambda"],
+    "types": [
+      "node",
+      "aws-lambda"
+    ],
     "outDir": "dist"
   },
-  "include": ["src", "build.mjs"]
+  "include": [
+    "src",
+    "build.mjs",
+    "scripts"
+  ]
 }

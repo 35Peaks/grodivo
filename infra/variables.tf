@@ -52,3 +52,9 @@ variable "create_sender_identity" {
   type        = bool
   default     = false
 }
+
+variable "signals_schedule" {
+  description = "EventBridge Scheduler cron for the M&A signals run (America/New_York)"
+  type        = string
+  default     = "cron(30 6 ? * MON-FRI *)"
+}

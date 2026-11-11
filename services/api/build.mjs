@@ -2,7 +2,7 @@
 import { build } from "esbuild";
 import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 
-const handlers = ["api", "admin", "migrate", "digest", "notify"];
+const handlers = ["api", "admin", "migrate", "digest", "notify", "news", "ingest"];
 rmSync("dist", { recursive: true, force: true });
 
 for (const name of handlers) {

@@ -55,3 +55,40 @@ export interface Scorecard {
 }
 export interface Quota { id: string; user_id: string | null; user_name: string | null; period_start: string; period_end: string; target_arr: number; target_bookings: number }
 export interface AdminUser { username: string; id: string; email: string; name: string; role: "admin" | "manager" | "rep"; enabled: boolean; status: string; created: string }
+
+export interface SignalProspect { name: string; role: string | null; segment: Segment; angle: string | null }
+export interface Signal {
+  id: string; headline: string; summary: string | null;
+  deal_status: "rumored" | "announced" | "pending" | "closed" | "terminated" | "unknown";
+  deal_type: "pe_platform" | "pe_add_on" | "corporate_acquisition" | "merger" | "take_private" | "carve_out" | "other";
+  acquirer: string | null; target: string | null; sponsor: string | null;
+  advisors: { name: string; role: string | null }[]; deal_value_usd_m: number | null;
+  sector: string | null; region: string | null; announced_on: string | null; fit_score: number;
+  acquirer_ticker: string | null; target_ticker: string | null; acquirer_hq: string | null; target_hq: string | null;
+  target_employees: number | null; acquirer_employees: number | null; consideration: string | null;
+  price_per_share: number | null; premium_pct: number | null; expected_close: string | null; closed_on: string | null;
+  financing: string | null; approvals: string | null; terms: Record<string, unknown>;
+  events: { field: string; old_value: string | null; new_value: string | null; origin: string | null; source_url: string | null; at: string }[];
+  why_grodivo: string | null; prospects: SignalProspect[];
+  status: "new" | "watching" | "actioned" | "dismissed" | "archived"; status_note: string | null;
+  actioned_by_name: string | null; actioned_at: string | null; first_seen_at: string; last_seen_at: string;
+  sources: { url: string; publisher: string | null; title: string | null; origin: string; published_at: string | null }[];
+  matched_accounts: { id: string; name: string; segment: Segment }[];
+  links: { account_id: string | null; account_name: string | null; deal_id: string | null; role: string | null; created_at: string }[];
+}
+export interface SignalSummary {
+  new: number; new_high_fit: number; watching: number; actioned_30d: number; last_24h: number;
+  runs: { origin: string; started_at: string; items_in: number; created: number; merged: number; skipped: number; note: string | null }[];
+}
+
+export interface LpSummary { gps: number; commitments: number; total_usd_m: number; plans: number; primary_pct: number | null; latest_month: string | null; all_records: number }
+export interface LpGp {
+  gp: string; commitments: number; total_usd_m: number; plans: number; latest_month: string | null; groups: string[];
+  primary_count: number; recent_funds: (string | null)[]; account: { id: string; name: string } | null;
+}
+export interface LpSignal {
+  id: number; event_month: string | null; plan: string | null; state: string | null; signal_category: string | null; signal_type: string | null;
+  asset_class: string | null; asset_group: string; counterparty: string | null; amount_usd_m: number | null; action_detail: string | null;
+  source_snippet: string | null; source_name: string | null; source_title: string | null; source_url: string | null;
+  source_type: string | null; doc_type: string | null; doc_date: string | null;
+}

@@ -7,3 +7,5 @@ output "migrate_function" { value = aws_lambda_function.fn["migrate"].function_n
 output "digest_function" { value = aws_lambda_function.fn["digest"].function_name }
 output "anthropic_secret_name" { value = aws_secretsmanager_secret.anthropic.name }
 output "app_url" { value = local.app_url }
+output "news_function" { value = aws_lambda_function.fn["news"].function_name }
+output "fmp_secret_name" { value = aws_secretsmanager_secret.fmp.name }
