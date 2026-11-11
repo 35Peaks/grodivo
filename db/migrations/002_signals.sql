@@ -10,8 +10,8 @@ CREATE TYPE signal_deal_status AS ENUM ('rumored', 'announced', 'pending', 'clos
 CREATE TYPE signal_deal_type AS ENUM (
   'pe_platform', 'pe_add_on', 'corporate_acquisition', 'merger', 'take_private', 'carve_out', 'other'
 );
-CREATE TYPE signal_status AS ENUM ('new', 'watching', 'actioned', 'dismissed');
-CREATE TYPE signal_origin AS ENUM ('fmp', 'gdelt', 'claude_research', 'manual');
+CREATE TYPE signal_status AS ENUM ('new', 'watching', 'actioned', 'dismissed', 'archived');
+CREATE TYPE signal_origin AS ENUM ('fmp', 'gdelt', 'claude_research', 'manual', 'digest');
 
 CREATE TABLE signals (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -120,6 +120,34 @@ CREATE TABLE signal_candidates (
   UNIQUE (origin, url)
 );
 CREATE INDEX signal_candidates_created_idx ON signal_candidates(created_at DESC);
+
+-- Every item logged by the 35 Peaks / Group Black Dome scheduled digests (PE Weekly, Fashion is Finance,
+-- Compute is Capital, WM Weekly, Fintech Weekly, Oil/Gas/Energy, ...), all deal types, kept verbatim.
+-- Deal-type rows (M&A, buyout, add-on, take-private) also become signals; signal_id links them.
+CREATE TABLE digest_items (
+  id                 bigserial PRIMARY KEY,
+  digest             text NOT NULL,
+  date_logged        date,
+  week_of            text,
+  section            text,
+  headline           text NOT NULL,
+  url                text,
+  firms_named        text[] NOT NULL DEFAULT '{}',
+  sellers            text[] NOT NULL DEFAULT '{}',
+  target_company     text,
+  deal_type          text,
+  deal_size_usd_m    numeric(14,2),
+  source_publication text,
+  summary            text,
+  source_file        text,
+  signal_id          uuid REFERENCES signals(id) ON DELETE SET NULL,
+  raw                jsonb NOT NULL,
+  imported_at        timestamptz NOT NULL DEFAULT now()
+);
+-- Same story logged by two digests (or re-imported) is one row
+CREATE UNIQUE INDEX digest_items_story_uniq ON digest_items (coalesce(url, ''), lower(headline));
+CREATE INDEX digest_items_type_idx ON digest_items(deal_type, date_logged DESC);
+CREATE INDEX digest_items_firms_idx ON digest_items USING gin (firms_named);
 
 -- One row per news run, so the team can see the feed is alive
 CREATE TABLE signal_runs (

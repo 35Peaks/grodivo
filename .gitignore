@@ -9,3 +9,4 @@ wrangler.deploy.json
 tf-outputs.json
 .env.local
 !.env.example
+digest-batches/

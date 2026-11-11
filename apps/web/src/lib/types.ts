@@ -70,7 +70,7 @@ export interface Signal {
   financing: string | null; approvals: string | null; terms: Record<string, unknown>;
   events: { field: string; old_value: string | null; new_value: string | null; origin: string | null; source_url: string | null; at: string }[];
   why_grodivo: string | null; prospects: SignalProspect[];
-  status: "new" | "watching" | "actioned" | "dismissed"; status_note: string | null;
+  status: "new" | "watching" | "actioned" | "dismissed" | "archived"; status_note: string | null;
   actioned_by_name: string | null; actioned_at: string | null; first_seen_at: string; last_seen_at: string;
   sources: { url: string; publisher: string | null; title: string | null; origin: string; published_at: string | null }[];
   matched_accounts: { id: string; name: string; segment: Segment }[];

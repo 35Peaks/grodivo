@@ -22,7 +22,7 @@ export const LABELS: Record<string, string> = {
   pe_platform: "PE platform", pe_add_on: "PE add-on", corporate_acquisition: "Corporate acquisition", merger: "Merger",
   take_private: "Take-private", carve_out: "Carve-out", other: "Other",
   rumored: "Rumored", announced: "Announced", pending: "Pending close", closed: "Closed", terminated: "Terminated", unknown: "Status unclear",
-  fmp: "SEC filings (FMP)", gdelt: "News wire (GDELT)", claude_research: "Claude research", manual: "Added by team",
+  fmp: "SEC filings (FMP)", digest: "35 Peaks digests", archived: "Archived", gdelt: "News wire (GDELT)", claude_research: "Claude research", manual: "Added by team",
   acquirer: "Acquirer", target: "Target", sponsor: "Sponsor", advisor: "Advisor",
 };
 export const label = (k: string | null | undefined) => (k ? LABELS[k] ?? k.replace(/_/g, " ") : "");

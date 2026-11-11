@@ -10,6 +10,7 @@ const TABS = [
   { value: "watching", label: "Watching" },
   { value: "actioned", label: "Actioned" },
   { value: "dismissed", label: "Dismissed" },
+  { value: "archived", label: "Archive" },
 ] as const;
 
 const DISMISS_REASONS = ["Not a fit for Grodivo", "Too small", "Already closed and integrated", "Duplicate", "Not a real deal"];
@@ -85,7 +86,7 @@ function SignalCard({ s, onAdd, onDismiss }: { s: Signal; onAdd: (s: Signal, p?:
             <p className="mt-3 rounded-lg bg-muted-bg px-3 py-2 text-sm text-ink"><span className="font-medium">Why Grodivo: </span>{s.why_grodivo}</p>
           )}
 
-          {s.prospects.length > 0 && s.status !== "actioned" && (
+          {s.prospects.length > 0 && s.status !== "actioned" && s.status !== "dismissed" && (
             <ul className="mt-3 divide-y divide-line rounded-lg border border-line">
               {s.prospects.map((p) => (
                 <li key={p.name} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
@@ -129,11 +130,11 @@ function SignalCard({ s, onAdd, onDismiss }: { s: Signal; onAdd: (s: Signal, p?:
             </button>
             <div className="flex flex-wrap gap-1.5">
               {s.status === "new" && <Button size="sm" variant="ghost" onClick={() => act("watch")}>Watch</Button>}
-              {(s.status === "new" || s.status === "watching") && <>
+              {(s.status === "new" || s.status === "watching" || s.status === "archived") && <>
                 <Button size="sm" onClick={() => onAdd(s)}>Add other company…</Button>
                 <Button size="sm" variant="ghost" onClick={() => onDismiss(s)}>Dismiss</Button>
               </>}
-              {(s.status === "dismissed" || s.status === "watching") && <Button size="sm" variant="ghost" onClick={() => act("reopen")}>Move to New</Button>}
+              {(s.status === "dismissed" || s.status === "watching" || s.status === "archived") && <Button size="sm" variant="ghost" onClick={() => act("reopen")}>Move to New</Button>}
             </div>
           </div>
           {showSources && s.events.filter((e) => e.field !== "created").length > 0 && (
@@ -318,7 +319,8 @@ export function Signals() {
 
       {list.isLoading ? <Loading /> : list.error ? <ErrorBox error={list.error} /> : list.data!.length === 0 ? (
         <Empty title={status === "new" ? "No new signals" : `No ${status} signals`}>
-          {status === "new" ? "New deals arrive each weekday morning. Check Watching for deals you're tracking." : "Try clearing a filter."}
+          {status === "new" ? "New deals arrive each weekday morning. Check Watching for deals you're tracking."
+            : status === "archived" ? "Older deals imported from the 35 Peaks digests appear here." : "Try clearing a filter."}
         </Empty>
       ) : (
         <div className={cx("space-y-3", list.isFetching && "opacity-70")}>

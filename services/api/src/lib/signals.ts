@@ -6,7 +6,7 @@ import { segments } from "./validate.js";
 
 export const dealStatuses = ["rumored", "announced", "pending", "closed", "terminated", "unknown"] as const;
 export const dealTypes = ["pe_platform", "pe_add_on", "corporate_acquisition", "merger", "take_private", "carve_out", "other"] as const;
-export const origins = ["fmp", "gdelt", "claude_research", "manual"] as const;
+export const origins = ["fmp", "gdelt", "claude_research", "manual", "digest"] as const;
 export type Origin = (typeof origins)[number];
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish().catch(null);
@@ -120,7 +120,7 @@ const same = (a: unknown, b: unknown) => {
 
 /** The verbatim extraction, minus the provider record (stored on the source row). */
 const extractedOf = (s: SignalInput) => {
-  const { source, ...rest } = s as SignalInput & Record<string, unknown>;
+  const { source, _status: _s, ...rest } = s as SignalInput & Record<string, unknown>;
   return { ...rest, source: { url: source.url, publisher: source.publisher, title: source.title, published_at: source.published_at } };
 };
 
@@ -160,6 +160,11 @@ export async function upsertSignals(client: pg.PoolClient, items: SignalInput[],
         events.push(["deal_status", existing.deal_status, s.deal_status]);
       }
       if (existing.deal_type === "other" && s.deal_type !== "other") set("deal_type", s.deal_type, "::signal_deal_type");
+      // A historical (archived) deal that shows up again in the live feed comes back to the queue
+      if (existing.status === "archived" && origin !== "digest") {
+        set("status", "new", "::signal_status");
+        events.push(["status", "archived", "new"]);
+      }
       for (const f of TRACKED) {
         const v = (s as any)[f];
         if (v === null || v === undefined || same(existing[f], v)) continue;
@@ -184,9 +189,12 @@ export async function upsertSignals(client: pg.PoolClient, items: SignalInput[],
       }
       merged++;
     } else {
-      const cols = [...COLUMNS, "dedupe_key", "fit_score", "advisors", "prospects", "terms", "extracted"];
+      const initial = (s as any)._status === "archived" ? "archived" : "new";   // backfills land in the archive
+      const cols = [...COLUMNS, "dedupe_key", "fit_score", "advisors", "prospects", "terms", "extracted", "status", "first_seen_at"];
+      // Imported history keeps its original date; live items are seen now
+      const firstSeen = origin === "digest" && s.source.published_at ? s.source.published_at : new Date().toISOString();
       const vals = [...COLUMNS.map((c) => (s as any)[c] ?? null), key, s.fit_score,
-        JSON.stringify(s.advisors), JSON.stringify(s.prospects), JSON.stringify(s.terms), JSON.stringify(extracted)];
+        JSON.stringify(s.advisors), JSON.stringify(s.prospects), JSON.stringify(s.terms), JSON.stringify(extracted), initial, firstSeen];
       id = (await client.query<{ id: string }>(
         `INSERT INTO signals (${cols.join(", ")}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(", ")}) RETURNING id`, vals)).rows[0]!.id;
       await client.query(

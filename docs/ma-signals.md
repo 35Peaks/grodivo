@@ -40,6 +40,37 @@ Everything the feed sees is kept in Postgres, so deal data accumulates over time
 The raw S3 batches are also retained for 365 days. `GET /signals/:id` returns the full record including raw sources;
 `GET /signals/candidates/recent` lists everything the feed considered.
 
+## History from the 35 Peaks digests
+
+The scheduled Claude digests (PE Weekly, Fashion is Finance, Compute is Capital, WM Weekly, Fintech Weekly,
+Oil/Gas/Energy, and the Press Intelligence DB) all log items in one CSV format. `scripts/import-digests.ts` loads them:
+
+- **Every row, all types** (deals, fund closes, people moves, growth rounds, policy) goes into `digest_items` verbatim.
+- **Deal rows** (M&A, buyout, take-private, add-on) also become signals. Rows older than 14 days land in the
+  **Archive** tab; recent ones land in **New**. A live-feed report of an archived deal moves it back to New.
+- Fit scores, buyer/sponsor roles and deal status are heuristic for imported rows (no Claude call). Stories logged by
+  more than one digest are stored once. Re-running is safe.
+
+Dry run on the logs as of Nov 10, 2026: 1,099 unique stories, 307 deal rows, 302 deals after merging
+(29 new, 273 archive).
+
+```bash
+cd services/api
+# 1. Build batches from the CSVs (paths on Eric's Mac shown)
+npx tsx scripts/import-digests.ts --out ./digest-batches \
+  ~/Desktop/"35 Peaks"/PE_Weekly_Data_Log.csv ~/Desktop/"35 Peaks"/Fashion_is_Finance_Data_Log.csv \
+  ~/Desktop/"35 Peaks"/Compute_is_Capital_Data_Log.csv \
+  ~/Claude/Projects/"Group Black Dome"/"Fintech Weekly"/Fintech_Weekly_Data_Log.csv \
+  ~/Claude/Projects/"Group Black Dome"/"Wealth Management Weekly"/WM_Weekly_Data_Log.csv \
+  ~/Claude/Projects/"Group Black Dome"/"Press Intelligence"/data/Press_Intelligence_DB.csv \
+  ~/Documents/Claude/Projects/"35 Peaks"/Oil_Gas_Energy_Data_Log.csv
+# 2. Hand them to the ingest Lambda (same path as the daily feed)
+aws s3 cp ./digest-batches s3://grodivo-digests-<account-id>/signals/inbox/backfill/ --recursive
+```
+
+For ongoing loads, re-run the same two commands weekly (they only add what's new), or have each scheduled digest
+task run them after it appends to its CSV. That choice belongs to whoever owns the AWS account.
+
 ## What the sales team does with a signal
 
 | Action | Effect |
