@@ -2,7 +2,7 @@ export const SEGMENTS = ["pe", "corporate_ma", "consulting", "cxo_board"] as con
 export const STAGES = ["lead", "qualified", "discovery", "proposal", "pilot", "negotiation", "closed_won", "closed_lost"] as const;
 export const OPEN_STAGES = STAGES.slice(0, 6);
 export const OFFERINGS = ["diagnostic", "kai_subscription", "enterprise_transformation", "pilot"] as const;
-export const SOURCES = ["direct", "partner", "referral", "inbound", "event", "investor", "news_signal"] as const;
+export const SOURCES = ["direct", "partner", "referral", "inbound", "event", "investor", "news_signal", "lp_signal"] as const;
 export const MOTIONS = ["land", "expand"] as const;
 export const SIGNAL_TYPES = ["pe_platform", "pe_add_on", "corporate_acquisition", "merger", "take_private", "carve_out", "other"] as const;
 export const SIGNAL_DEAL_STATUSES = ["rumored", "announced", "pending", "closed", "terminated", "unknown"] as const;
@@ -22,6 +22,8 @@ export const LABELS: Record<string, string> = {
   pe_platform: "PE platform", pe_add_on: "PE add-on", corporate_acquisition: "Corporate acquisition", merger: "Merger",
   take_private: "Take-private", carve_out: "Carve-out", other: "Other",
   rumored: "Rumored", announced: "Announced", pending: "Pending close", closed: "Closed", terminated: "Terminated", unknown: "Status unclear",
+  lp_signal: "LP commitment", private_equity: "Private equity", venture: "Venture", private_credit: "Private credit",
+  infrastructure: "Infrastructure", real_estate: "Real estate", hedge_funds: "Hedge funds", public: "Public markets",
   fmp: "SEC filings (FMP)", digest: "35 Peaks digests", archived: "Archived", gdelt: "News wire (GDELT)", claude_research: "Claude research", manual: "Added by team",
   acquirer: "Acquirer", target: "Target", sponsor: "Sponsor", advisor: "Advisor",
 };

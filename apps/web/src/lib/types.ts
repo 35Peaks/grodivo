@@ -80,3 +80,15 @@ export interface SignalSummary {
   new: number; new_high_fit: number; watching: number; actioned_30d: number; last_24h: number;
   runs: { origin: string; started_at: string; items_in: number; created: number; merged: number; skipped: number; note: string | null }[];
 }
+
+export interface LpSummary { gps: number; commitments: number; total_usd_m: number; plans: number; primary_pct: number | null; latest_month: string | null; all_records: number }
+export interface LpGp {
+  gp: string; commitments: number; total_usd_m: number; plans: number; latest_month: string | null; groups: string[];
+  primary_count: number; recent_funds: (string | null)[]; account: { id: string; name: string } | null;
+}
+export interface LpSignal {
+  id: number; event_month: string | null; plan: string | null; state: string | null; signal_category: string | null; signal_type: string | null;
+  asset_class: string | null; asset_group: string; counterparty: string | null; amount_usd_m: number | null; action_detail: string | null;
+  source_snippet: string | null; source_name: string | null; source_title: string | null; source_url: string | null;
+  source_type: string | null; doc_type: string | null; doc_date: string | null;
+}

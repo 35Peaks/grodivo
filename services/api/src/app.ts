@@ -8,6 +8,7 @@ import { accounts, contacts } from "./routes/accounts.js";
 import { activities } from "./routes/activities.js";
 import { settings } from "./routes/settings.js";
 import { signals } from "./routes/signals.js";
+import { lp } from "./routes/lp.js";
 
 export const app = new Hono<AppEnv>();
 
@@ -21,6 +22,7 @@ app.route("/contacts", contacts);
 app.route("/activities", activities);
 app.route("/settings", settings);
 app.route("/signals", signals);
+app.route("/lp", lp);
 
 app.onError((err, c) => {
   if (err instanceof ZodError) return c.json({ error: "invalid input", issues: err.issues }, 400);

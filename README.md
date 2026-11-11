@@ -20,6 +20,8 @@ sees the full pipeline.
 - **M&A signals**: each weekday morning, deals from SEC filings (FMP), news (GDELT) and a Claude
   research pass are scored for Grodivo fit and queued for the team to add to pipeline, watch or dismiss.
   See [docs/ma-signals.md](docs/ma-signals.md).
+- **LP commitments**: public pension board actions from the 35 Peaks Pension Signal Monitor, ranking GPs by
+  new private-markets commitments. See [docs/lp-signals.md](docs/lp-signals.md).
 - **Weekly digest**: Monday 7am ET email with pipeline totals, stage changes, new deals,
   overdue deals, and a short Claude-written commentary.
 

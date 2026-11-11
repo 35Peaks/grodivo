@@ -3,11 +3,17 @@
 import type { S3Event } from "aws-lambda";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { withTx } from "../lib/db.js";
+import { upsertLpSignals } from "../lib/lp-import.js";
 import { origins, parseSignals, recordCandidates, upsertSignals, type CandidateRecord, type Origin } from "../lib/signals.js";
 
 const s3 = new S3Client({});
 
-export async function ingestBatch(batch: { origin?: string; note?: string; items?: unknown[]; candidates?: CandidateRecord[]; digest_items?: any[] }) {
+export async function ingestBatch(batch: { origin?: string; note?: string; items?: unknown[]; candidates?: CandidateRecord[]; digest_items?: any[]; lp_signals?: Record<string, unknown>[] }) {
+  // Pension Signal Monitor batches carry LP board actions only
+  if (Array.isArray(batch.lp_signals)) {
+    const n = await withTx(null, (client) => upsertLpSignals(client, batch.lp_signals!));
+    return { origin: "lp_signals", upserted: n };
+  }
   const origin = (origins as readonly string[]).includes(String(batch.origin)) ? (batch.origin as Origin) : "manual";
   // Keep each item's original position so digest rows can point at the signal they produced
   const raw = Array.isArray(batch.items) ? batch.items : [];

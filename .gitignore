@@ -10,3 +10,4 @@ tf-outputs.json
 .env.local
 !.env.example
 digest-batches/
+lp-batches/

@@ -7,6 +7,7 @@ import { Loading, ErrorBox } from "./ui";
 const NAV = [
   { to: "/", label: "Overview" },
   { to: "/signals", label: "M&A signals" },
+  { to: "/lp", label: "LP commitments" },
   { to: "/pipeline", label: "Pipeline" },
   { to: "/accounts", label: "Accounts" },
   { to: "/team", label: "Team" },
